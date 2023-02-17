@@ -101,9 +101,6 @@ def get_user_age(user_id):
     response = resp.json()
     date_list = response['response']
     for j in date_list:
-        date = j.get('bdate')
-        bdate = date
-        birth_year = bdate
         if 'bdate' not in j or 'bdate' == None:
             write_msg(user_id, 'Enter you age and tap Search then, please:')
             for event in longpoll.listen():
@@ -161,10 +158,9 @@ def find_users(user_id, sex, user_city_id, birth_year):
                                         'count': count,
                                         'fields': 'has_photo, sex, city, status',
                                         'v': '5.131'})
+        offset += count
+        time.sleep(0.1)
         try:
-            data = response.json()['response']['items']
-            offset += count
-            time.sleep(0.1)
             for item in response.json()['response']['items']:
                 if 'city' in item and item['is_closed'] is False:
                     city = item.get('city')
@@ -173,14 +169,14 @@ def find_users(user_id, sex, user_city_id, birth_year):
                         user = User(user_id=(item['id']),
                                     city=(item['city']['id']),
                                     full_name=f"{item['first_name']} {item['last_name']}",
-                                    user_link=('https://vk.com/id' + str(item['id']))
-                                    )
+                                    user_link=('https://vk.com/id' + str(item['id'])))
                         session.add(user)
                         session.commit()
-        except KeyError:
+                        session.close()
+        except KeyError as error:
             write_msg(user_id, 'You did not enter a valid city name')
             write_msg(user_id, 'Please enter start to initialize search once again')
-            break
+            return error
     print('Database was created')
 
 
@@ -200,12 +196,11 @@ def get_photos(user_id, owner_id):
                                         'offset': offset,
                                         'count': count,
                                         'v': '5.131'})
-        data = response.json()['response']['items']
         offset += count
         time.sleep(0.1)
         try:
-            for item in response.json()['response']['items']:
-                photo_id = item['id']
+            for i in response.json()['response']['items']:
+                photo_id = i['id']
                 response = requests.get('https://api.vk.com/method/photos.get',
                                         params={'access_token': user_token,
                                                 'owner_id': owner_id,
@@ -213,7 +208,6 @@ def get_photos(user_id, owner_id):
                                                 'photo_ids': photo_id,
                                                 'extended': 1,
                                                 'v': '5.131'})
-                data = response.json()['response']['items']
                 time.sleep(0.1)
                 for item in response.json()['response']['items']:
                     photo = Photo(photo_id=(item['id']),
