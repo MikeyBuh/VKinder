@@ -42,7 +42,6 @@ for event in longpoll.listen():
             session.close()
             write_msg(event.user_id, f'What user do you like? I will deliver you its 3 best profile photos')
             write_msg(event.user_id, f'Enter user fullname or id, please:')
-
             continue
         elif request == 'exit':
             write_msg(event.user_id, f'Good Luck! You are welcome at any time')
