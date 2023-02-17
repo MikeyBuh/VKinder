@@ -165,9 +165,6 @@ def find_users(user_id, sex, user_city_id, birth_year):
             data = response.json()['response']['items']
             offset += count
             time.sleep(0.1)
-            '''with open('users.json', 'w', encoding='utf-8') as file:
-                json.dump(response.json(), file, indent=2, sort_keys=True, ensure_ascii=False)
-                file.close()'''
             for item in response.json()['response']['items']:
                 if 'city' in item and item['is_closed'] is False:
                     city = item.get('city')
@@ -206,9 +203,6 @@ def get_photos(user_id, owner_id):
         data = response.json()['response']['items']
         offset += count
         time.sleep(0.1)
-        '''with open('photos.json', 'w', encoding='utf-8') as file:
-            json.dump(response.json(), file, indent=2, ensure_ascii=False)
-            file.close()'''
         try:
             for item in response.json()['response']['items']:
                 photo_id = item['id']
@@ -221,9 +215,6 @@ def get_photos(user_id, owner_id):
                                                 'v': '5.131'})
                 data = response.json()['response']['items']
                 time.sleep(0.1)
-                '''with open('photos_profile.json', 'w', encoding='utf-8') as file:
-                    json.dump(data, file, indent=2, ensure_ascii=False)
-                    file.close()'''
                 for item in response.json()['response']['items']:
                     photo = Photo(photo_id=(item['id']),
                                   album_id=(item['album_id']),
