@@ -1,24 +1,20 @@
-from main import *
-import psycopg2
-from operator import or_
+from functions import *
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from models import User, Photo, Base
+from models import User, Base
+
+offset = 0
 
 for event in longpoll.listen():
+    global users_list
     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
         request = event.text.lower()
-        age = event.text
-        var = event.text
-        full_name = var
-        owner_id = event.text
         user_id = event.user_id
-
         if request == 'start':
             Base.metadata.drop_all(bind=engine)
             Base.metadata.create_all(bind=engine)
             keyboard = VkKeyboard()
-            buttons = ['search', 'exit']
-            button_colors = [VkKeyboardColor.NEGATIVE, VkKeyboardColor.POSITIVE]
+            buttons = ['search', 'go', 'exit']
+            button_colors = [VkKeyboardColor.NEGATIVE, VkKeyboardColor.PRIMARY, VkKeyboardColor.POSITIVE]
             for btn, btn_color in zip(buttons, button_colors):
                 keyboard.add_button(btn, btn_color)
             write_msg(event.user_id, f'Keyboard ready to go!', keyboard)
@@ -26,42 +22,42 @@ for event in longpoll.listen():
             user_get = user_get[0]
             first_name = user_get['first_name']
             write_msg(event.user_id, f'Hi, {first_name}! I am a dating bot')
-            write_msg(event.user_id, f'Do you need a couple? Tap Search button and I will find it for you')
-            get_user_sex(user_id=event.peer_id)
-            find_users(user_id=event.peer_id, sex=get_user_sex(user_id=event.peer_id),
-                       user_city_id=get_user_city(user_id=event.peer_id),
-                       birth_year=get_user_age(user_id=event.peer_id))
+            write_msg(event.user_id, f'Do you need a couple? Tap "Search" button and I will find it for you')
+            get_user_info(user_id=event.peer_id)
             continue
         elif request == 'search':
-            write_msg(event.user_id, f"OK Let's do it")
-            write_msg(event.user_id, f'I found a couple for you!')
-            for k in session.query(User.full_name, User.user_id, User.user_link).filter(User.viewed_users == None)\
-                    .limit(10).all():
-                write_msg(event.user_id, '{}, id: {}, link: {}'.format(*k))
-            session.commit()
-            session.close()
-            write_msg(event.user_id, f'What user do you like? I will deliver you its 3 best profile photos')
-            write_msg(event.user_id, f'Enter user fullname or id, please:')
+            Base.metadata.drop_all(bind=engine)
+            Base.metadata.create_all(bind=engine)
+            users_list = find_users(user_id, user_city_id=get_user_city(user_id, city=get_user_info(user_id)), offset=0)
+            continue
+        elif request == 'go':
+            try:
+                users = users_list[0][0]
+                users_id = users['id']
+                write_msg(event.user_id, f'I found a couple for you!')
+                write_msg(user_id, f"{(users['first_name'])} {(users['last_name'])}")
+                write_msg(user_id, f"User link: {'https://vk.com/id' + str(users['id'])}")
+                get_photos(user_id, users_id=users_id)
+                user = User(user_id=users['id'], first_name=users['first_name'],
+                            last_name=users['last_name'],
+                            user_link='https://vk.com/id' + str(users['id']))
+                session.add(user)
+                session.query(User).filter(User.user_id == str(users['id'])).update({'viewed_users': 1},
+                                                                                    synchronize_session='fetch')
+                session.commit()
+                session.close()
+                write_msg(event.user_id, f'Tap "Go" button again if you want to continue')
+                users_list[0].remove(users)
+                if len(users_list[0]) == 0:
+                    offset += 100
+                    users_list = find_users(user_id, user_city_id=get_user_city(user_id,
+                                            city=get_user_info(user_id)), offset=offset)
+            except NameError:
+                write_msg(event.user_id, f'You need to search firstly not go! Tap "Search" button again, please')
+            except TypeError:
+                write_msg(event.user_id, f'You need to search firstly not go! Tap "Search" button again, please')
             continue
         elif request == 'exit':
             write_msg(event.user_id, f'Good Luck! You are welcome at any time')
-            continue
-        elif var == full_name:
-            try:
-                for c in session.query(User.user_id).filter(User.full_name == var).limit(1):
-                    owner_id = '{}'.format(*c)
-                session.commit()
-                write_msg(event.user_id, f'OK')
-                write_msg(event.user_id, f'Please wait...')
-                get_photos(user_id=event.peer_id, owner_id=owner_id)
-                for n in session.query(User.user_link).filter(User.user_id == owner_id).limit(1).all():
-                    write_msg(user_id, 'User link: {}'.format(*n))
-                for d in session.query(Photo.id, Photo.likes, Photo.comments, Photo.photo_link).join(User) \
-                        .filter(or_(User.full_name == var, User.user_id == owner_id))\
-                        .order_by(Photo.likes.desc(), Photo.comments.desc()).limit(3).all():
-                    write_msg(user_id, 'Photo {}: likes: {}, comments: {}, photo link: {}'.format(*d))
-                session.commit()
-            except (Exception, psycopg2.Error) as error:
-                write_msg(event.user_id, f'Error! Tap Search again or enter user fullname or id correctly, please')
-            session.close()
+            write_msg(event.user_id, f'Tap "Go" button to continue')
             continue
