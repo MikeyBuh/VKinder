@@ -36,7 +36,7 @@ def write_msg(user_id, message, keyboard=None):
 
 
 def get_user_info(user_id):
-    url = f'https://api.vk.com/method/users.get'
+    url = 'https://api.vk.com/method/users.get'
     params = {'access_token': group_token,
               'user_ids': user_id,
               'fields': 'sex, city, bdate',
@@ -61,7 +61,7 @@ def get_user_sex(sex):
 
 
 def get_cities(user_id, city_name):
-    url = f'https://api.vk.com/method/database.getCities'
+    url = 'https://api.vk.com/method/database.getCities'
     params = {'access_token': user_token,
               'country_id': 1,
               'q': f'{city_name}',
