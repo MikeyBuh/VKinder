@@ -18,12 +18,9 @@ for event in longpoll.listen():
             for btn, btn_color in zip(buttons, button_colors):
                 keyboard.add_button(btn, btn_color)
             write_msg(event.user_id, f'Keyboard ready to go!', keyboard)
-            user_get = vk.users.get(user_ids=user_id)
-            user_get = user_get[0]
-            first_name = user_get['first_name']
-            write_msg(event.user_id, f'Hi, {first_name}! I am a dating bot')
+            first_name = get_user_info(user_id=event.peer_id)
+            write_msg(event.user_id, f'Hi, {first_name[3]}! I am a dating bot')
             write_msg(event.user_id, f'Do you need a couple? Tap "Search" button and I will find it for you')
-            get_user_info(user_id=event.peer_id)
             continue
         elif request == 'search':
             Base.metadata.drop_all(bind=engine)

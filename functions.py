@@ -48,7 +48,8 @@ def get_user_info(user_id):
             sex = j.get('sex')
             city = j.get('city')
             bdate = j.get('bdate')
-            return sex, city, bdate
+            first_name = j.get('first_name')
+            return sex, city, bdate, first_name
 
 
 def get_user_sex(sex):
