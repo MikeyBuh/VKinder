@@ -50,7 +50,7 @@ for event in longpoll.listen():
                     users_list = find_users(user_id, user_city_id=get_user_city(user_id,
                                             city=get_user_info(user_id)), offset=offset)
             except NameError:
-                write_msg(event.user_id, f'You need to search firstly not go! Tap "Search" button again, please')
+                write_msg(event.user_id, f'You need to search firstly not go! Tap "Search" button, please')
             except TypeError:
                 write_msg(event.user_id, f'You need to search firstly not go! Tap "Search" button again, please')
             continue
